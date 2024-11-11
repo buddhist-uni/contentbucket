@@ -35,36 +35,36 @@ HOMEPAGE_TEMPLAGE = """<!DOCTYPE html>
 </html>
 """
 
-ZENODO_TEMPLATE = """{
+ZENODO_TEMPLATE = """{{
   "title": "The Open Buddhist University {repo}",
   "keywords": ["buddhism"],
   "upload_type": "lesson",
   "description": "<p>A collection of free-distribution files for teaching Buddhism and related topics.</p>",
-  "creators": [{
+  "creators": [{{
     "name": "Khemarato Bhikkhu",
     "orcid": "0000-0003-4738-7882"
-  }],
+  }}],
   "access_right": "open",
   "license": "cc-by-nc-4.0",
   "related_identifiers": [
-    {
+    {{
       "relation": "isPartOf",
       "identifier": "https://www.buddhistuniversity.net"
-    },{
+    }},{{
       "relation": "isPreviousVersionOf",
       "identifier": "https://github.com/{username}/{repo}"
-    },{
+    }},{{
       "relation": "isRequiredBy",
       "identifier": "https://doi.org/10.5281/zenodo.4448510"
-    }
+    }}
   ],
-  "subjects": [{
+  "subjects": [{{
     "term": "Buddhism",
     "identifier": "https://id.loc.gov/authorities/subjects/sh85017454.html",
     "scheme": "url"
-  }],
+  }}],
   "language": "eng"
-}
+}}
 """
 
 def get_repo_name() -> tuple[str, str]:
@@ -101,16 +101,16 @@ if __name__ == "__main__":
   username, repo = get_repo_name()
   print(f"GitHub Username: {username}")
   print(f"Repository Name: {repo}")
+  print("Setting up GitHub Pages...")
+  subprocess.run(["gh", "api", "--method", "POST", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2022-11-28", "/repos/{username}/{repo}/pages".format(username=username, repo=repo), "-f", 'source[branch]=main', "-f", "source[path]=/", "-f", "build_type=legacy"], check=True)
   print("Writing files...")
   Path(".nojekyll").touch()
   Path("index.html").write_text(HOMEPAGE_TEMPLAGE.format(repo=repo, username=username))
   Path("README.md").write_text(README_TEMPLATE.format(repo=repo))
   Path(".zenodo.json").write_text(ZENODO_TEMPLATE.format(repo=repo, username=username))
-  Path("CNAME").write_text("buddhistuniversity.net/{repo}".format(repo=repo))
   print("Committing files to GitHub...")
   subprocess.run(["git", "add", "."], check=True)
+  subprocess.run(["git", "rm", "setup.py"], check=True) # self-destruct
   subprocess.run(["git", "commit", "-m", "Initial (automated) commit"], check=True)
   subprocess.run(["git", "push", "origin", "main"], check=True)
-  print("Setting up GitHub Pages...")
-  subprocess.run(["gh", "api", "-X", "PUT", "/repos/{username}/{repo}/pages", "-f", "source=main"], check=True)
-  print("Done! You can rm this setup file now :)")
+  print("Done! This script will now self-destruct :)")
