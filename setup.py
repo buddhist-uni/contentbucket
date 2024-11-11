@@ -102,7 +102,9 @@ if __name__ == "__main__":
   print(f"GitHub Username: {username}")
   print(f"Repository Name: {repo}")
   print("Setting up GitHub Pages...")
-  subprocess.run(["gh", "api", "--method", "POST", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2022-11-28", "/repos/{username}/{repo}/pages".format(username=username, repo=repo), "-f", 'source[branch]=main', "-f", "source[path]=/", "-f", "build_type=legacy"], check=True)
+  # Have to do this as two requests due to this bug: https://github.com/orgs/community/discussions/144171
+  subprocess.run(["gh", "api", "--method", "POST", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2022-11-28", "/repos/{username}/{repo}/pages".format(username=username, repo=repo), "-f", 'source[branch]=main', "-f", "build_type=workflow"], check=True)
+  subprocess.run(["gh", "api", "--method", "PUT", "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2022-11-28", "/repos/{username}/{repo}/pages".format(username=username, repo=repo), "-f", 'source[branch]=main', "-f", "source[path]=/", "-f", "build_type=legacy"], check=True)
   print("Writing files...")
   Path(".nojekyll").touch()
   Path("index.html").write_text(HOMEPAGE_TEMPLAGE.format(repo=repo, username=username))
@@ -110,7 +112,7 @@ if __name__ == "__main__":
   Path(".zenodo.json").write_text(ZENODO_TEMPLATE.format(repo=repo, username=username))
   print("Committing files to GitHub...")
   subprocess.run(["git", "add", "."], check=True)
-  subprocess.run(["git", "rm", "setup.py"], check=True) # self-destruct
+  subprocess.run(["git", "rm", "-f", "setup.py"], check=True) # self-destruct
   subprocess.run(["git", "commit", "-m", "Initial (automated) commit"], check=True)
   subprocess.run(["git", "push", "origin", "main"], check=True)
   print("Done! This script will now self-destruct :)")
